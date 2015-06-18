@@ -1,0 +1,42 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 22
+    buildToolsVersion "23.0.0 rc2"
+
+    ext.localProperties = new Properties()
+    ext.localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+    ext.getLocalProperty = { propertyName ->
+        def property = localProperties.getProperty(propertyName)
+        return property == null ? "" : property
+    }
+
+    defaultConfig {
+        applicationId "com.intrepid.wonseokshin.intrepidcheckin"
+        minSdkVersion 15
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        all {
+            def slackChannelUrlKey = getLocalProperty("webhook_url")
+            buildConfigField "String", "webhook_url", "\"$slackChannelUrlKey\""
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {mavenCentral()}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:22.2.0'
+    compile 'com.google.android.gms:play-services:6.5.87'
+    compile files('libs/retrofit-1.9.0.jar')
+    compile 'com.google.code.gson:gson:2.3'
+}
