@@ -241,6 +241,4 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
         toastHandler.sendEmptyMessage(0);
     }
 
-
-
 }

@@ -1,30 +1,14 @@
 package com.intrepid.wonseokshin.intrepidcheckin;
 
 import android.app.Activity;
-import android.app.Notification;
-import android.app.PendingIntent;
-import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
-import android.content.SharedPreferences;
-import android.location.Location;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -73,8 +57,20 @@ public class MainActivity extends Activity {
         },0,200);
 
         //Add in animations for the interface from the activity
-        //Animation animation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fly_in_from_left);
-        //myimage.startAnimation(animation);
+        //Basic Animation Resources: http://stackoverflow.com/questions/18147840/slide-right-to-left-android-animations
+        Animation animationSlideInLeft = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fly_in_from_left);
+        animationSlideInLeft.setDuration(1000);
+
+        Animation animationSlideInRight = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fly_in_from_right);
+        animationSlideInRight.setDuration(1000);
+
+        findViewById(R.id.ivintrepidlogo).startAnimation(animationSlideInRight);
+        findViewById(R.id.buttonStartTracking).startAnimation(animationSlideInRight);
+
+
+        findViewById(R.id.tv_header).startAnimation(animationSlideInLeft);
+        findViewById(R.id.etName).startAnimation(animationSlideInLeft);
+        findViewById(R.id.buttonStopTracking).startAnimation(animationSlideInLeft);
     }
 
     @Override
