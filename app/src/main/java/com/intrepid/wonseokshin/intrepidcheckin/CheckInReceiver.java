@@ -33,9 +33,9 @@ public class CheckInReceiver extends BroadcastReceiver {
 
         SlackMessage message = new SlackMessage();
         message.text = stringCheckIn;
-        service.sendCheckinMessage(BuildConfig.webhook_url ,message, new Callback<Void>() {
+        service.sendCheckinMessage(BuildConfig.webhook_url ,message, new Callback<Object>() {
             @Override
-            public void success(Void aVoid, Response response) {}
+            public void success(Object object, Response response) {}
 
             @Override
             public void failure(RetrofitError retrofitError) {
