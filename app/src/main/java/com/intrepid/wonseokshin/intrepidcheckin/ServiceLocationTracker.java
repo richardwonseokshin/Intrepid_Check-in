@@ -38,7 +38,8 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
     //handler to post toast messages, possible cause of memory leaks, better to remove?
     private ToastHandlerForService toastHandler;
 
-    public ServiceLocationTracker() {}
+    public ServiceLocationTracker() {
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -69,9 +70,9 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
         return startTracking();
     }
 
-    private int startTracking(){
+    private int startTracking() {
         hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        if (googleApiClient == null){
+        if (googleApiClient == null) {
             googleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
@@ -99,7 +100,7 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
         return START_STICKY;
     }
 
-    private int stopTracking(){
+    private int stopTracking() {
         notificationMessage = getString(R.string.service_destroyed_toast_message);
 
         LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
@@ -137,7 +138,7 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
         //unit of measure is in meters
         float distanceToIntrepid = locationIntrepid.distanceTo(location);
 
-        if (distanceToIntrepid < CHECK_IN_RADIUS){
+        if (distanceToIntrepid < CHECK_IN_RADIUS) {
             boolean notificationShowing = PreferenceManagerCustom.getBoolean(this,
                     Constants.PREF_KEY_NOTIFICATION_SHOWING, false);
 
@@ -145,7 +146,7 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
             if (!notificationShowing && !betweenTwoAndFourAM) {
 
                 notificationMessage = getString(R.string.user_arrived_toast_message, personName,
-                        (int)distanceToIntrepid);
+                        (int) distanceToIntrepid);
 
                 Intent intentCancelCheckin = new Intent(this, CancelCheckInReceiver.class);
                 PendingIntent pendingIntentCancelCheckin = PendingIntent.getBroadcast(this, 0,
@@ -168,16 +169,17 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
 
                 PreferenceManagerCustom.putBoolean(this, Constants.PREF_KEY_NOTIFICATION_SHOWING, true);
             }
-        }
-        else{
+        } else {
             notificationMessage = getString(R.string.user_location_toast_message, personName,
-                    (int)distanceToIntrepid);
+                    (int) distanceToIntrepid);
         }
         toastHandler.setToastMessage(notificationMessage);
-        toastHandler.sendEmptyMessage(0);    }
+        toastHandler.sendEmptyMessage(0);
+    }
 
     @Override
-    public void onConnectionSuspended(int i) {}
+    public void onConnectionSuspended(int i) {
+    }
 
     @Override
     public void onLocationChanged(Location location) {

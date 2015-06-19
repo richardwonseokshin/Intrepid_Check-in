@@ -22,7 +22,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        inputUsername = ((EditText)findViewById(R.id.etName));
+        inputUsername = ((EditText) findViewById(R.id.etName));
         String usernameFromPreferences = PreferenceManagerCustom.getString(this, Constants.PREF_KEY_USERNAME, getString(R.string.default_username));
         inputUsername.setText(usernameFromPreferences);
 
@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
         showInterfaceAnimation();
     }
 
-    public void showInterfaceAnimation(){
+    public void showInterfaceAnimation() {
         //Basic Animation Resources: http://stackoverflow.com/questions/18147840/slide-right-to-left-android-animations
         Animation animationSlideInLeft = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fly_in_from_left);
         animationSlideInLeft.setDuration(1000);

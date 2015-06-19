@@ -5,7 +5,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.widget.Toast;
 
-public class ToastHandlerForService extends Handler{
+public class ToastHandlerForService extends Handler {
 
     Context context;
     public String toastMessage = "";
@@ -24,13 +24,12 @@ public class ToastHandlerForService extends Handler{
         return instance;
     }
 
-    public void setToastMessage(String message){
+    public void setToastMessage(String message) {
         toastMessage = message;
     }
 
     @Override
-    public void handleMessage(Message msg)
-    {
+    public void handleMessage(Message msg) {
         Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show();
     }
 }
