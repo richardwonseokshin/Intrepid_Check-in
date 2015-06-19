@@ -7,15 +7,15 @@ import android.content.Intent;
 
 public class CancelCheckInReceiver extends BroadcastReceiver {
 
-    public CancelCheckInReceiver() {
-    }
+    public CancelCheckInReceiver() {}
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        PreferenceManagerCustom.putBoolean(context, "notificationshowing", true);
+        PreferenceManagerCustom.putBoolean(context, Constants.PREF_KEY_NOTIFICATION_SHOWING, true);
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancel(1);
         mNotificationManager.cancelAll();
     }
+
 }

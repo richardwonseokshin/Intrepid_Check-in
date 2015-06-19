@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <item name="home_screen_background" type="color">#ff202020</item>
+    <item name="home_screen_header_text_color" type="color">#ffffffff</item>
+    <item name="home_screen_service_running_text_color" type="color">#ffffffff</item>
+    <item name="home_screen_input_name_hint" type="color">#ffaaaaaa</item>
+    <item name="home_screen_input_name" type="color">#ffffffff</item>
+    <item name="home_screen_input_name_shadow" type="color">#ff0000ff</item>
+    <item name="home_screen_input_name_edittext_underline" type="color">#00ffff</item>
+    <item name="home_screen_input_name_edittext_background" type="color">#202020</item>
+    <item name="home_screen_service_button_pressed" type="color">#ffaaaaaa</item>
+    <item name="home_screen_service_button_focused" type="color">#ffaaaaaa</item>
+    <item name="home_screen_service_button_background" type="color">#ffdddddd</item>
+
+
+
+
     <item name="twitter_blue_dark" type="color">#ff4451ff</item>
     <item name="twitter_blue" type="color">#FF4099FF</item>
     <item name="twitter_blue_light" type="color">#ff6cd4ff</item>

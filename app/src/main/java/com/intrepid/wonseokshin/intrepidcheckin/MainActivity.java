@@ -3,60 +3,37 @@ package com.intrepid.wonseokshin.intrepidcheckin;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
-
-import java.util.Timer;
-import java.util.TimerTask;
-
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-
-    private Timer timer;
-    private boolean preferenceServiceRunning;
+    private EditText inputUsername;
+    private TextView serviceRunningDisplay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ((EditText)findViewById(R.id.etName)).setText(PreferenceManagerCustom.getString(this, "username", "Olaf"));
-        preferenceServiceRunning = PreferenceManagerCustom.getBoolean(MainActivity.this, "servicerunning", false);
+        inputUsername = ((EditText)findViewById(R.id.etName));
+        String usernameFromPreferences = PreferenceManagerCustom.getString(this, Constants.PREF_KEY_USERNAME, getString(R.string.default_username));
+        inputUsername.setText(usernameFromPreferences);
 
+        serviceRunningDisplay = (TextView) findViewById(R.id.tv_service_running);
+        serviceRunningDisplay.setVisibility(View.INVISIBLE);
+        serviceRunningDisplay.postInvalidate();
 
-        //Use a timer to check whether the service is running or stopped
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            boolean tickerShowing = false;
+        showInterfaceAnimation();
+    }
 
-            @Override
-            public void run() {
-                if (preferenceServiceRunning) {
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (tickerShowing) {
-                                findViewById(R.id.tv_service_running).setVisibility(View.INVISIBLE);
-                            } else {
-                                findViewById(R.id.tv_service_running).setVisibility(View.VISIBLE);
-                            }
-                            findViewById(R.id.tv_service_running).postInvalidate();
-                        }
-                    });
-
-                    tickerShowing = !tickerShowing;
-                }
-            }
-
-        },0,200);
-
-        //Add in animations for the interface from the activity
+    public void showInterfaceAnimation(){
         //Basic Animation Resources: http://stackoverflow.com/questions/18147840/slide-right-to-left-android-animations
         Animation animationSlideInLeft = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fly_in_from_left);
         animationSlideInLeft.setDuration(1000);
@@ -67,16 +44,52 @@ public class MainActivity extends Activity {
         findViewById(R.id.ivintrepidlogo).startAnimation(animationSlideInRight);
         findViewById(R.id.buttonStartTracking).startAnimation(animationSlideInRight);
 
-
         findViewById(R.id.tv_header).startAnimation(animationSlideInLeft);
         findViewById(R.id.etName).startAnimation(animationSlideInLeft);
         findViewById(R.id.buttonStopTracking).startAnimation(animationSlideInLeft);
     }
 
+
+    public void startService(View view) {
+        //Used Extras and SharedPrefs to send data to service,
+        //Using services alone caused issues for some reason
+        //Should look into SharedPrefs more, how services, broadcastreceivers, etc. fit in
+        Intent intent = new Intent(this, ServiceLocationTracker.class);
+        String name = inputUsername.getText().toString();
+        if(TextUtils.isEmpty(name)){
+            name = getString(R.string.default_username);
+        }
+        intent.putExtra(Constants.INTENT_EXTRA_USERNAME, name);
+
+        PreferenceManagerCustom.putString(this, Constants.PREF_KEY_USERNAME, name);
+        PreferenceManagerCustom.putBoolean(this, Constants.PREF_KEY_NOTIFICATION_SHOWING, false);
+        PreferenceManagerCustom.putBoolean(this, Constants.PREF_KEY_SERVICE_RUNNING, true);
+
+        startService(intent);
+
+        serviceRunningDisplay.setVisibility(View.VISIBLE);
+        serviceRunningDisplay.postInvalidate();
+    }
+
+    // Triggered when user taps on Stop Tracking button
+    public void stopService(View view) {
+        serviceRunningDisplay.setVisibility(View.INVISIBLE);
+        serviceRunningDisplay.postInvalidate();
+
+        Intent intent = new Intent(this, ServiceLocationTracker.class);
+        stopService(intent);
+
+        PreferenceManagerCustom.putBoolean(this, Constants.PREF_KEY_SERVICE_RUNNING, false);
+        PreferenceManagerCustom.putBoolean(this, Constants.PREF_KEY_NOTIFICATION_SHOWING, false);
+
+        serviceRunningDisplay.setVisibility(View.INVISIBLE);
+        serviceRunningDisplay.postInvalidate();
+    }
+
+
     @Override
     protected void onStop() {
         super.onStop();
-        timer.cancel();
     }
 
     @Override
@@ -100,46 +113,6 @@ public class MainActivity extends Activity {
 
         return super.onOptionsItemSelected(item);
     }
-
-
-    // Start the service
-    public void startService(View view) {
-        PreferenceManagerCustom.putBoolean(this, "servicerunning", true);
-        preferenceServiceRunning = true;
-
-        //Used Extras and SharedPrefs to send data to service,
-        //Using services alone caused issues for some reason
-        //Should look into SharedPrefs more, how services, broadcastreceivers, etc. fit in
-        Intent intent = new Intent(this, ServiceLocationTracker.class);
-        String name = ((EditText)findViewById(R.id.etName)).getText().toString();
-        if(name.compareTo("") == 0){
-            name = "Olaf";
-        }
-        intent.putExtra("username", name);
-
-        PreferenceManagerCustom.putString(this, "username", name);
-        PreferenceManagerCustom.putBoolean(this, "notificationshowing", false);
-
-        startService(intent);
-    }
-
-    // Triggered when user taps on Stop Tracking button
-    public void stopService(View view) {
-        //Stop flicker of textview with text "Service is Running"
-        timer.cancel();
-        preferenceServiceRunning = false;
-        PreferenceManagerCustom.putBoolean(this, "servicerunning", false);
-
-        findViewById(R.id.tv_service_running).setVisibility(View.INVISIBLE);
-        findViewById(R.id.tv_service_running).postInvalidate();
-
-        Intent intent = new Intent(this, ServiceLocationTracker.class);
-
-        PreferenceManagerCustom.putBoolean(this, "notificationshowing", false);
-
-        stopService(intent);
-    }
-
 
 
 }

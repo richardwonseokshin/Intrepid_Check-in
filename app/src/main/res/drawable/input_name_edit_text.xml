@@ -2,12 +2,12 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#00FFFF" />
+            <solid android:color="@color/home_screen_input_name_edittext_underline" />
         </shape>
     </item>
     <item android:bottom="1dp">
         <shape android:shape="rectangle">
-            <solid android:color="#202020" />
+            <solid android:color="@color/home_screen_input_name_edittext_background" />
         </shape>
     </item>
 </layer-list>

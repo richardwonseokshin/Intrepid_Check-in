@@ -4,7 +4,6 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import java.util.Calendar;
 
@@ -20,15 +19,15 @@ public class CheckInReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String username = PreferenceManagerCustom.getString(context, "username", "Olaf");
-        String stringCheckIn = Calendar.getInstance().getTime() + " - Richard's Check-in App - " + username + " has checked in";
+        String username = PreferenceManagerCustom.getString(context, Constants.PREF_KEY_USERNAME, context.getString(R.string.default_username));
+        String stringCheckIn = context.getString(R.string.check_in_string, Calendar.getInstance().getTime(), username);
 
         //if user "cancels" today's checkin, make app think that the notification is already showing so that it doesn't re-show the notification
-        PreferenceManagerCustom.putBoolean(context, "notificationshowing", true);
+        PreferenceManagerCustom.putBoolean(context, Constants.PREF_KEY_NOTIFICATION_SHOWING, true);
 
         //Send message to slack using slack api http post, use retrofit
         //parameters that can be set (for future reference): setconverter(GsonConverter),setloglevel, review retrofit serializedname
-        RestAdapter restAdapter = new RestAdapter.Builder().setEndpoint("https://hooks.slack.com").build();
+        RestAdapter restAdapter = new RestAdapter.Builder().setEndpoint(Constants.URL_SLACK_WEBHOOK_ENDPOINT).build();
         SlackWebhookService service = restAdapter.create(SlackWebhookService.class);
 
         SlackMessage message = new SlackMessage();
@@ -38,13 +37,11 @@ public class CheckInReceiver extends BroadcastReceiver {
             public void success(Object object, Response response) {}
 
             @Override
-            public void failure(RetrofitError retrofitError) {
-                Log.e("Retrofit", "Failed to send slack request.");
-            }
+            public void failure(RetrofitError retrofitError) {}
         });
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.cancel(1);
+        mNotificationManager.cancel(Constants.STATUS_BAR_NOTIFICATION_ID);
         mNotificationManager.cancelAll();
     }
 }

@@ -3,14 +3,12 @@ package com.intrepid.wonseokshin.intrepidcheckin;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.support.v7.app.NotificationCompat;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -20,120 +18,104 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import java.util.Calendar;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class ServiceLocationTracker extends Service implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
-    public static final String TAG = ServiceLocationTracker.class.getSimpleName();
+    public static final int LOCATION_UPDATE_INTERVAL = 10000; //10 Seconds
+    public static final int LOCATION_UPDATE_FASTEST_INTERVAL = 1000;//1 Second
+    public static final double INTREPID_LATITUDE = 42.366980; //Intrepid Lat.: 42.366980
+    public static final double INTREPID_LONGITUDE = -71.080161; //Intrepid Long.: -71.080161
+    public static final int CHECK_IN_RADIUS = 100; //100 meters
 
-    public static final int LOCATION_UPDATE_INTERVAL = 10 * 1000;//10,000 ms, 10 sec
-    public static final int LOCATION_UPDATE_FASTEST_INTERVAL = 1 * 1000;//1,000 ms, 1 sec
-
-    public static final int TIMER_INTERVAL = 5 * 1000;//timer manually grabs the lastlocation
-
-    private GoogleApiClient mGoogleApiClient;
-    private LocationRequest mLocationRequest;
+    private GoogleApiClient googleApiClient;
+    private LocationRequest locationRequest;
     private String personName = "";
     private String notificationMessage;
-    private int mNotificationId = 1;
-    private Timer timer;
 
-    int hour;
+    private int hour;
 
-    //handler to post toast messages
-    private final Handler toastHandler = new Handler()
-    {
-        @Override
-        public void handleMessage(Message msg)
-        {
-            Toast.makeText(getApplicationContext(), notificationMessage, Toast.LENGTH_SHORT).show();
-        }
-    };
-
+    //handler to post toast messages, possible cause of memory leaks, better to remove?
+    private ToastHandlerForService toastHandler;
 
     public ServiceLocationTracker() {}
 
-    //Service
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        throw new UnsupportedOperationException(getString(R.string.not_yet_implemented_toast_message));
     }
+
     @Override
     public void onCreate() {
-        Toast.makeText(this, "Service was Created", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.service_created_toast_message), Toast.LENGTH_LONG).show();
+        toastHandler = ToastHandlerForService.getInstance(this);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String usernameFromIntent = null;
+        String usernameFromIntent = "";
         if(intent != null) {
-            usernameFromIntent = intent.getStringExtra("username");
+            usernameFromIntent = intent.getStringExtra(Constants.INTENT_EXTRA_USERNAME);
         }
 
-        if(usernameFromIntent.compareTo("") != 0) {
-            PreferenceManagerCustom.putString(this, "username", usernameFromIntent);
-            personName = PreferenceManagerCustom.getString(this, "username", "Olaf");
+        if(!TextUtils.isEmpty(usernameFromIntent)) {
+            PreferenceManagerCustom.putString(this, Constants.PREF_KEY_USERNAME, usernameFromIntent);
+            personName = PreferenceManagerCustom.getString(this,
+                    Constants.PREF_KEY_USERNAME, getString(R.string.default_username));
         }
 
-        PreferenceManagerCustom.putBoolean(this, "servicerunning", true);
+        PreferenceManagerCustom.putBoolean(this, Constants.PREF_KEY_SERVICE_RUNNING, true);
 
         return startTracking();
     }
 
     private int startTracking(){
         hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        if(mGoogleApiClient == null){
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
+        if(googleApiClient == null){
+            googleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
                     .build();
         }
 
-        if(mLocationRequest == null) {
-            // Create the LocationRequest object
-            mLocationRequest = LocationRequest.create()
+        if(locationRequest == null) {
+            locationRequest = LocationRequest.create()
                     .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                     .setInterval(LOCATION_UPDATE_INTERVAL)
                     .setFastestInterval(LOCATION_UPDATE_FASTEST_INTERVAL);
         }
 
-        personName = PreferenceManagerCustom.getString(this, "username", "Olaf");
-        //Just to be doubly sure that we are not using an empty string
-        if(personName.compareTo("") == 0)
-            personName = "Olaf";
+        personName = PreferenceManagerCustom.getString(this, Constants.PREF_KEY_USERNAME,
+                getString(R.string.default_username));
 
-        Toast.makeText(this, "Hello " + personName + "!\nService Started", Toast.LENGTH_LONG).show();
+        personName = TextUtils.isEmpty(personName) ? getString(R.string.default_username) : personName;
 
-        mGoogleApiClient.connect();
+        String greeting = getString(R.string.user_greeting, personName);
+        Toast.makeText(this, greeting, Toast.LENGTH_LONG).show();
+
+        googleApiClient.connect();
 
         return START_STICKY;
     }
 
     private int stopTracking(){
-        notificationMessage = "Service Destroyed";
+        notificationMessage = getString(R.string.service_destroyed_toast_message);
 
+        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
         if (toastHandler != null) {
+            toastHandler.setToastMessage(notificationMessage);
             toastHandler.sendEmptyMessage(0);
         }
 
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-            mGoogleApiClient.disconnect();
+        if (googleApiClient != null && googleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+            googleApiClient.disconnect();
         }
 
-        if (timer != null) {
-            timer.cancel();
-            timer = null;
-            System.gc();
-        }
-
-        PreferenceManagerCustom.putBoolean(this, "servicerunning", false);
-
+        PreferenceManagerCustom.putBoolean(this, Constants.PREF_KEY_SERVICE_RUNNING, false);
         stopSelf();
+
         return START_NOT_STICKY;
     }
 
@@ -142,64 +124,36 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
         stopTracking();
     }
 
-    //ConnectionCallbacks
     @Override
     public void onConnected(Bundle bundle) {
-        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (location == null) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        }
-        else {
-            handleNewLocation(location);
-        }
-
-        if(timer == null) {
-            timer = new Timer();
-            timer.scheduleAtFixedRate(new TimerTask() {
-
-
-                @Override
-                public void run() {
-                    Location location = null;
-
-                    if(mGoogleApiClient != null)
-                        location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-
-                    if(location != null)
-                        handleNewLocation(location);
-
-
-                    hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-                    if(PreferenceManagerCustom.getBoolean(ServiceLocationTracker.this, "notificationshowing", true) && hour > 2 && hour < 4){
-                        PreferenceManagerCustom.putBoolean(ServiceLocationTracker.this, "notificationshowing", false);
-
-                        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                        mNotificationManager.cancel(1);
-                        mNotificationManager.cancelAll();
-                    }
-                }
-            }, 0, TIMER_INTERVAL);
-        }
+        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
     private void handleNewLocation(Location location) {
-        //Intrepid: 42.366980, -71.080161
         Location locationIntrepid = new Location("");
-        locationIntrepid.setLatitude(42.366980);
-        locationIntrepid.setLongitude(-71.080161);
+        locationIntrepid.setLatitude(INTREPID_LATITUDE);
+        locationIntrepid.setLongitude(INTREPID_LONGITUDE);
 
         //unit of measure is in meters
         float distanceToIntrepid = locationIntrepid.distanceTo(location);
 
-        if(distanceToIntrepid < 100){
-            if(!PreferenceManagerCustom.getBoolean(this, "notificationshowing", false) && (hour <=2 || hour >= 4)) {
-                notificationMessage = personName + " is at Intrepid Pursuits!\n(" + ((int) distanceToIntrepid) + " meters)";
+        if(distanceToIntrepid < CHECK_IN_RADIUS){
+            boolean notificationShowing = PreferenceManagerCustom.getBoolean(this,
+                    Constants.PREF_KEY_NOTIFICATION_SHOWING, false);
+
+            boolean betweenTwoAndFourAM = hour > 2 && hour < 4;
+            if(!notificationShowing && !betweenTwoAndFourAM) {
+
+                notificationMessage = getString(R.string.user_arrived_toast_message, personName,
+                        (int)distanceToIntrepid);
 
                 Intent intentCancelCheckin = new Intent(this, CancelCheckInReceiver.class);
-                PendingIntent pendingIntentCancelCheckin = PendingIntent.getBroadcast(this, 0, intentCancelCheckin, PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent pendingIntentCancelCheckin = PendingIntent.getBroadcast(this, 0,
+                        intentCancelCheckin, PendingIntent.FLAG_UPDATE_CURRENT);
 
                 Intent intentCheckin = new Intent(this, CheckInReceiver.class);
-                PendingIntent pendingIntentCheckin = PendingIntent.getBroadcast(this, 0, intentCheckin, PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent pendingIntentCheckin = PendingIntent.getBroadcast(this, 0,
+                        intentCheckin, PendingIntent.FLAG_UPDATE_CURRENT);
 
                 NotificationCompat.Builder mBuilder =
                         (NotificationCompat.Builder) new NotificationCompat.Builder(this)
@@ -209,36 +163,37 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
                                 .addAction(R.drawable.xmark, "Clear", pendingIntentCancelCheckin)
                                 .addAction(R.drawable.checkmark, "Check In", pendingIntentCheckin)
                                 .setContentText(notificationMessage);
-
-                // Gets an instance of the NotificationManager service
                 NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                // Builds the notification and issues it.
-                mNotifyMgr.notify(mNotificationId, mBuilder.build());
+                mNotifyMgr.notify(Constants.STATUS_BAR_NOTIFICATION_ID, mBuilder.build());
 
-                PreferenceManagerCustom.putBoolean(this, "notificationshowing", true);
+                PreferenceManagerCustom.putBoolean(this, Constants.PREF_KEY_NOTIFICATION_SHOWING, true);
             }
         }
         else{
-            notificationMessage = personName + " is " + ((int)distanceToIntrepid) + " meters from Intrepid Pursuits!";
+            notificationMessage = getString(R.string.user_location_toast_message, personName,
+                    (int)distanceToIntrepid);
         }
-        toastHandler.sendEmptyMessage(0);
-    }
+        toastHandler.setToastMessage(notificationMessage);
+        toastHandler.sendEmptyMessage(0);    }
 
     @Override
     public void onConnectionSuspended(int i) {}
 
-    //LocationListener
     @Override
     public void onLocationChanged(Location location) {
         handleNewLocation(location);
-        Toast.makeText(this, "New Location Data Received", Toast.LENGTH_LONG).show();
+        String updatedLocationMessage = getString(R.string.location_update_toast_message,
+                location.getLatitude(), location.getLongitude());
+
+        Toast.makeText(this, updatedLocationMessage, Toast.LENGTH_LONG).show();
     }
 
-    //OnConnectionFailedListener
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-        notificationMessage = "Connection Failed! :(";
+        notificationMessage = getString(R.string.connection_failed_toast_message);
+        toastHandler.setToastMessage(notificationMessage);
         toastHandler.sendEmptyMessage(0);
+        stopTracking();
     }
 
 }

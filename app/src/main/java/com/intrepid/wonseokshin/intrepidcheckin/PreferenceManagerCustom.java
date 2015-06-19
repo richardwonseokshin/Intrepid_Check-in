@@ -4,9 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-/**
- * Created by wonseokshin on 6/18/15.
- */
 public class PreferenceManagerCustom {
     public final static String PREFERENCE_NAME = "com.intrepid.wonseokshin.intrepidcheckin";
 
