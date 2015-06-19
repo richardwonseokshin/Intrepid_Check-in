@@ -54,11 +54,11 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String usernameFromIntent = "";
-        if(intent != null) {
+        if (intent != null) {
             usernameFromIntent = intent.getStringExtra(Constants.INTENT_EXTRA_USERNAME);
         }
 
-        if(!TextUtils.isEmpty(usernameFromIntent)) {
+        if (!TextUtils.isEmpty(usernameFromIntent)) {
             PreferenceManagerCustom.putString(this, Constants.PREF_KEY_USERNAME, usernameFromIntent);
             personName = PreferenceManagerCustom.getString(this,
                     Constants.PREF_KEY_USERNAME, getString(R.string.default_username));
@@ -71,7 +71,7 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
 
     private int startTracking(){
         hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        if(googleApiClient == null){
+        if (googleApiClient == null){
             googleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
@@ -79,7 +79,7 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
                     .build();
         }
 
-        if(locationRequest == null) {
+        if (locationRequest == null) {
             locationRequest = LocationRequest.create()
                     .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                     .setInterval(LOCATION_UPDATE_INTERVAL)
@@ -137,12 +137,12 @@ public class ServiceLocationTracker extends Service implements GoogleApiClient.C
         //unit of measure is in meters
         float distanceToIntrepid = locationIntrepid.distanceTo(location);
 
-        if(distanceToIntrepid < CHECK_IN_RADIUS){
+        if (distanceToIntrepid < CHECK_IN_RADIUS){
             boolean notificationShowing = PreferenceManagerCustom.getBoolean(this,
                     Constants.PREF_KEY_NOTIFICATION_SHOWING, false);
 
             boolean betweenTwoAndFourAM = hour > 2 && hour < 4;
-            if(!notificationShowing && !betweenTwoAndFourAM) {
+            if (!notificationShowing && !betweenTwoAndFourAM) {
 
                 notificationMessage = getString(R.string.user_arrived_toast_message, personName,
                         (int)distanceToIntrepid);

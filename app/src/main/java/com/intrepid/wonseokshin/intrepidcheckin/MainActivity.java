@@ -56,7 +56,7 @@ public class MainActivity extends Activity {
         //Should look into SharedPrefs more, how services, broadcastreceivers, etc. fit in
         Intent intent = new Intent(this, ServiceLocationTracker.class);
         String name = inputUsername.getText().toString();
-        if(TextUtils.isEmpty(name)){
+        if (TextUtils.isEmpty(name)) {
             name = getString(R.string.default_username);
         }
         intent.putExtra(Constants.INTENT_EXTRA_USERNAME, name);

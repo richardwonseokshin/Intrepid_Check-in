@@ -16,7 +16,7 @@ public class ToastHandlerForService extends Handler{
     }
 
     public static ToastHandlerForService getInstance(Context context) {
-        if(instance == null) {
+        if (instance == null) {
             instance = new ToastHandlerForService();
         }
 
